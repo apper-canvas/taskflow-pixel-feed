@@ -6,16 +6,26 @@ export default {
   ],
   theme: {
     extend: {
+      border: {
+        DEFAULT: '#e2e8f0',
+        200: '#e2e8f0',
+        300: '#cbd5e1',
+        700: '#334155'
+      },
+      background: '#ffffff',
+      foreground: '#0f172a',
       colors: {
         primary: {
           DEFAULT: '#6366f1',
           light: '#818cf8',
-          dark: '#4f46e5'
+          dark: '#4f46e5',
+          600: '#4f46e5'
         },
         secondary: {
           DEFAULT: '#06b6d4',
           light: '#22d3ee',
-          dark: '#0891b2'
+          dark: '#0891b2',
+          600: '#0891b2'
         },
         accent: '#f59e0b',
         surface: {
@@ -30,7 +40,7 @@ export default {
           800: '#1e293b',
           900: '#0f172a'
         }
-      },
+      }
       fontFamily: {
         sans: ['Inter', 'ui-sans-serif', 'system-ui'],
         heading: ['Inter', 'ui-sans-serif', 'system-ui']
