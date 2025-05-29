@@ -10,14 +10,19 @@ const MainFeature = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [filter, setFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [expandedTasks, setExpandedTasks] = useState(new Set())
+  const [selectedParentId, setSelectedParentId] = useState(null)
+
 
   const [sortBy, setSortBy] = useState('deadline')
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
     priority: 'medium',
-    deadline: ''
+    deadline: '',
+    parentId: null
   })
+
 
   // Load tasks from localStorage
   useEffect(() => {
@@ -43,13 +48,18 @@ const MainFeature = () => {
       ...newTask,
       completed: false,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      parentId: selectedParentId
     }
 
+
     setTasks(prev => [...prev, task])
-    setNewTask({ title: '', description: '', priority: 'medium', deadline: '' })
+    setNewTask({ title: '', description: '', priority: 'medium', deadline: '', parentId: null })
+
     setIsModalOpen(false)
     toast.success('Task created successfully!')
+    setSelectedParentId(null)
+
   }
 
   const toggleTask = (id) => {
@@ -79,8 +89,33 @@ const MainFeature = () => {
     toast.success('Priority updated!')
   }
 
+  const addSubtask = (parentId) => {
+    setSelectedParentId(parentId)
+    setIsModalOpen(true)
+  }
+
+  const getSubtasks = (parentId) => {
+    return tasks.filter(task => task.parentId === parentId)
+  }
+
+  const getParentTasks = () => {
+    return tasks.filter(task => !task.parentId)
+  }
+
+  const toggleTaskExpansion = (taskId) => {
+    const newExpanded = new Set(expandedTasks)
+    if (newExpanded.has(taskId)) {
+      newExpanded.delete(taskId)
+    } else {
+      newExpanded.add(taskId)
+    }
+    setExpandedTasks(newExpanded)
+  }
+
+
   const getFilteredTasks = () => {
     let filtered = tasks
+
 
     // Filter by search query
     if (searchQuery.trim()) {
@@ -112,6 +147,7 @@ const MainFeature = () => {
     }
 
     // Filter by status
+    // Filter by status
     if (filter === 'completed') {
       filtered = filtered.filter(task => task.completed)
     } else if (filter === 'pending') {
@@ -124,25 +160,48 @@ const MainFeature = () => {
       )
     }
 
+    // Group by hierarchy
+    const parentTasks = filtered.filter(task => !task.parentId)
+    const result = []
+    
+    parentTasks.forEach(parent => {
+      result.push(parent)
+      if (expandedTasks.has(parent.id)) {
+        const subtasks = filtered.filter(task => task.parentId === parent.id)
+        result.push(...subtasks)
+      }
+    })
+
     // Sort tasks
-    return filtered.sort((a, b) => {
-      if (sortBy === 'deadline') {
-        if (!a.deadline) return 1
-        if (!b.deadline) return -1
-        return new Date(a.deadline) - new Date(b.deadline)
-      } else if (sortBy === 'priority') {
-        const priorityOrder = { high: 3, medium: 2, low: 1 }
-        return priorityOrder[b.priority] - priorityOrder[a.priority]
-      } else if (sortBy === 'created') {
-        return new Date(b.createdAt) - new Date(a.createdAt)
+    // Sort tasks while maintaining hierarchy
+    return result.sort((a, b) => {
+      // If both are parent tasks or both are subtasks at same level
+      if ((!a.parentId && !b.parentId) || (a.parentId === b.parentId)) {
+        if (sortBy === 'deadline') {
+          if (!a.deadline) return 1
+          if (!b.deadline) return -1
+          return new Date(a.deadline) - new Date(b.deadline)
+        } else if (sortBy === 'priority') {
+          const priorityOrder = { high: 3, medium: 2, low: 1 }
+          return priorityOrder[b.priority] - priorityOrder[a.priority]
+        } else if (sortBy === 'created') {
+          return new Date(b.createdAt) - new Date(a.createdAt)
+        }
       }
       return 0
     })
   }
 
 
+
   const getTaskStats = () => {
-    const total = tasks.length
+    const parentTasks = tasks.filter(task => !task.parentId)
+    const subtasks = tasks.filter(task => task.parentId)
+    
+    const totalParent = parentTasks.length
+    const totalSubtasks = subtasks.length
+    const total = totalParent + totalSubtasks
+    
     const completed = tasks.filter(task => task.completed).length
     const pending = total - completed
     const overdue = tasks.filter(task => 
@@ -151,8 +210,9 @@ const MainFeature = () => {
       isBefore(new Date(task.deadline), startOfDay(new Date()))
     ).length
 
-    return { total, completed, pending, overdue }
+    return { total, completed, pending, overdue, totalParent, totalSubtasks }
   }
+
 
   const getPriorityStats = () => {
     const stats = { high: 0, medium: 0, low: 0 }
@@ -400,7 +460,8 @@ const MainFeature = () => {
         transition={{ duration: 0.6, delay: 0.4 }}
         className="space-y-4"
       >
-        <AnimatePresence>
+        </AnimatePresence>
+
           {getFilteredTasks().map((task, index) => {
             const deadlineStatus = getDeadlineStatus(task.deadline, task.completed)
             
@@ -552,8 +613,9 @@ const MainFeature = () => {
             >
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-2xl font-bold text-surface-900 dark:text-surface-100">
-                  Create New Task
+                  {selectedParentId ? 'Create New Subtask' : 'Create New Task'}
                 </h3>
+
                 <button
                   onClick={() => setIsModalOpen(false)}
                   className="p-2 hover:bg-surface-100 dark:hover:bg-surface-800 rounded-lg transition-colors"
@@ -617,6 +679,14 @@ const MainFeature = () => {
                     />
                   </div>
                 </div>
+                {selectedParentId && (
+                  <div className="mb-4 p-3 bg-secondary-50 dark:bg-secondary-900/20 rounded-xl border border-secondary-200 dark:border-secondary-700">
+                    <p className="text-sm text-secondary-700 dark:text-secondary-400">
+                      <span className="font-medium">Creating subtask for:</span> {tasks.find(t => t.id === selectedParentId)?.title}
+                    </p>
+                  </div>
+                )}
+
               </div>
 
               <div className="flex gap-3 mt-6">

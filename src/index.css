@@ -59,6 +59,29 @@
   .slide-up-enter {
     @apply animate-slide-up;
   }
+
+  .subtask-card {
+    @apply border-l-4 border-secondary-300 dark:border-secondary-600;
+  }
+  
+  .subtask-indent {
+    @apply ml-8 relative;
+  }
+  
+  .hierarchy-line {
+    @apply absolute -left-4 top-0 w-4 h-8 border-l-2 border-b-2 border-surface-300 dark:border-surface-600 rounded-bl-lg;
+  }
+  
+  .subtask-connector::before {
+    content: '';
+    @apply absolute -left-4 top-0 w-4 h-full border-l-2 border-surface-300 dark:border-surface-600;
+  }
+  
+  .subtask-connector::after {
+    content: '';
+    @apply absolute -left-4 top-8 w-4 h-px border-b-2 border-surface-300 dark:border-surface-600;
+  }
+
 }
 
 @layer utilities {
