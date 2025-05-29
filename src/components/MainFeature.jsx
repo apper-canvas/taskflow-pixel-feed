@@ -9,6 +9,8 @@ const MainFeature = () => {
   const [tasks, setTasks] = useState([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [filter, setFilter] = useState('all')
+  const [searchQuery, setSearchQuery] = useState('')
+
   const [sortBy, setSortBy] = useState('deadline')
   const [newTask, setNewTask] = useState({
     title: '',
@@ -80,6 +82,35 @@ const MainFeature = () => {
   const getFilteredTasks = () => {
     let filtered = tasks
 
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim()
+      filtered = filtered.filter(task => {
+        // Search in title
+        const titleMatch = task.title.toLowerCase().includes(query)
+        
+        // Search in description
+        const descriptionMatch = task.description.toLowerCase().includes(query)
+        
+        // Search in priority
+        const priorityMatch = task.priority.toLowerCase().includes(query)
+        
+        // Search in deadline (formatted)
+        let deadlineMatch = false
+        if (task.deadline) {
+          const formattedDeadline = format(new Date(task.deadline), 'MMM dd, yyyy').toLowerCase()
+          deadlineMatch = formattedDeadline.includes(query)
+        }
+        
+        // Search in completion status
+        const statusMatch = 
+          (task.completed && (query.includes('completed') || query.includes('done'))) ||
+          (!task.completed && (query.includes('pending') || query.includes('incomplete') || query.includes('todo')))
+        
+        return titleMatch || descriptionMatch || priorityMatch || deadlineMatch || statusMatch
+      })
+    }
+
     // Filter by status
     if (filter === 'completed') {
       filtered = filtered.filter(task => task.completed)
@@ -108,6 +139,7 @@ const MainFeature = () => {
       return 0
     })
   }
+
 
   const getTaskStats = () => {
     const total = tasks.length
@@ -284,6 +316,48 @@ const MainFeature = () => {
           />
         </div>
       </motion.div>
+      {/* Search Bar */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.25 }}
+        className="task-card p-4 md:p-6"
+      >
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <ApperIcon name="Search" className="w-5 h-5 text-surface-400" />
+            </div>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search tasks by title, description, deadline, priority, or status..."
+              className="w-full pl-10 pr-10 py-3 bg-surface-50 dark:bg-surface-800 border border-surface-200 dark:border-surface-700 rounded-xl text-surface-900 dark:text-surface-100 placeholder-surface-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 transition-colors"
+              >
+                <ApperIcon name="X" className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </div>
+        {searchQuery && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mt-3 text-sm text-surface-600 dark:text-surface-400"
+          >
+            {getFilteredTasks().length} task{getFilteredTasks().length !== 1 ? 's' : ''} found for "{searchQuery}"
+          </motion.div>
+        )}
+      </motion.div>
+
+
 
       {/* Filters and Sort */}
       <motion.div
