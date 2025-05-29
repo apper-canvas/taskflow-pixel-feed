@@ -465,6 +465,10 @@ const MainFeature = () => {
 
           {getFilteredTasks().map((task, index) => {
             const deadlineStatus = getDeadlineStatus(task.deadline, task.completed)
+            const subtasks = getSubtasks(task.id)
+            const hasSubtasks = subtasks.length > 0
+            const isExpanded = expandedTasks.has(task.id)
+            const isSubtask = task.parentId !== null
             
             return (
               <motion.div
@@ -476,12 +480,35 @@ const MainFeature = () => {
                 whileHover={{ scale: 1.01 }}
                 className={`task-card p-4 md:p-6 relative overflow-hidden ${
                   task.completed ? 'opacity-75' : ''
+                } ${
+                  isSubtask ? 'subtask-card subtask-indent' : ''
                 }`}
               >
+                {/* Hierarchy line for subtasks */}
+                {isSubtask && <div className="hierarchy-line" />}
+                
                 {/* Priority Indicator */}
                 <div className={`priority-indicator priority-${task.priority}`} />
 
                 <div className="flex items-start gap-4">
+                  {/* Expand/Collapse button for parent tasks with subtasks */}
+                  {!isSubtask && hasSubtasks && (
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => toggleTaskExpansion(task.id)}
+                      className="mt-1 w-6 h-6 rounded-full border-2 border-primary-300 dark:border-primary-600 flex items-center justify-center transition-all duration-300 hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/30"
+                    >
+                      <ApperIcon 
+                        name={isExpanded ? "ChevronDown" : "ChevronRight"} 
+                        className="w-4 h-4 text-primary-600 dark:text-primary-400" 
+                      />
+                    </motion.button>
+                  )}
+                  
+                  {/* Spacer for parent tasks without subtasks */}
+                  {!isSubtask && !hasSubtasks && <div className="w-6" />}
+                  
                   {/* Checkbox */}
                   <motion.button
                     whileHover={{ scale: 1.1 }}
@@ -499,13 +526,22 @@ const MainFeature = () => {
                   {/* Task Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-                      <h4 className={`text-lg font-semibold ${
-                        task.completed 
-                          ? 'line-through text-surface-500 dark:text-surface-500' 
-                          : 'text-surface-900 dark:text-surface-100'
-                      }`}>
-                        {task.title}
-                      </h4>
+                      <div className="flex items-center gap-2">
+                        <h4 className={`text-lg font-semibold ${
+                          task.completed 
+                            ? 'line-through text-surface-500 dark:text-surface-500' 
+                            : 'text-surface-900 dark:text-surface-100'
+                        }`}>
+                          {task.title}
+                        </h4>
+                        
+                        {/* Subtask counter for parent tasks */}
+                        {!isSubtask && hasSubtasks && (
+                          <span className="px-2 py-1 bg-secondary-100 dark:bg-secondary-900/30 text-secondary-700 dark:text-secondary-400 text-xs rounded-full font-medium">
+                            {subtasks.length} subtask{subtasks.length !== 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </div>
                       
                       <div className="flex items-center gap-2">
                         {/* Priority Badge */}
@@ -515,6 +551,19 @@ const MainFeature = () => {
 
                         {/* Actions */}
                         <div className="flex items-center gap-1">
+                          {/* Add Subtask button for parent tasks */}
+                          {!isSubtask && (
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() => addSubtask(task.id)}
+                              className="p-1 text-secondary-600 dark:text-secondary-400 hover:bg-secondary-100 dark:hover:bg-secondary-900/30 rounded transition-colors"
+                              title="Add Subtask"
+                            >
+                              <ApperIcon name="Plus" className="w-4 h-4" />
+                            </motion.button>
+                          )}
+                          
                           <select
                             value={task.priority}
                             onChange={(e) => updateTaskPriority(task.id, e.target.value)}
@@ -568,6 +617,14 @@ const MainFeature = () => {
                         <ApperIcon name="Clock" className="w-4 h-4" />
                         <span>Created {format(new Date(task.createdAt), 'MMM dd')}</span>
                       </div>
+                      
+                      {/* Parent task indicator for subtasks */}
+                      {isSubtask && (
+                        <div className="flex items-center gap-1 text-secondary-600 dark:text-secondary-400">
+                          <ApperIcon name="ArrowUpRight" className="w-4 h-4" />
+                          <span className="text-xs">Subtask of {tasks.find(t => t.id === task.parentId)?.title}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -690,13 +747,17 @@ const MainFeature = () => {
 
               </div>
 
-              <div className="flex gap-3 mt-6">
                 <button
-                  onClick={() => setIsModalOpen(false)}
+                  onClick={() => {
+                    setIsModalOpen(false)
+                    setSelectedParentId(null)
+                  }}
                   className="flex-1 px-4 py-3 bg-surface-100 dark:bg-surface-800 text-surface-700 dark:text-surface-300 font-medium rounded-xl hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors"
                 >
                   Cancel
                 </button>
+
+              <div className="flex gap-3 mt-6">
                 <button
                   onClick={addTask}
                   className="flex-1 px-4 py-3 bg-gradient-to-r from-primary-500 to-secondary-500 text-black font-medium rounded-xl hover:shadow-card transition-all duration-300"
