@@ -460,7 +460,8 @@ const MainFeature = () => {
         transition={{ duration: 0.6, delay: 0.4 }}
         className="space-y-4"
       >
-        </AnimatePresence>
+        <AnimatePresence>
+
 
           {getFilteredTasks().map((task, index) => {
             const deadlineStatus = getDeadlineStatus(task.deadline, task.completed)
