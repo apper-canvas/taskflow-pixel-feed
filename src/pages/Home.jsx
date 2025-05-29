@@ -81,7 +81,7 @@ const Home = () => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="hidden sm:flex items-center space-x-2 px-4 py-2 md:px-6 md:py-3 bg-gradient-to-r from-primary-500 to-secondary-500 text-white rounded-xl shadow-soft hover:shadow-card transition-all duration-300"
+                className="hidden sm:flex items-center space-x-2 px-4 py-2 md:px-6 md:py-3 bg-gradient-to-r from-primary-500 to-secondary-500 text-black rounded-xl shadow-soft hover:shadow-card transition-all duration-300"
               >
                 <ApperIcon name="Plus" className="w-4 h-4 md:w-5 md:h-5" />
                 <span className="font-medium">New Task</span>
@@ -90,7 +90,7 @@ const Home = () => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="sm:hidden p-2 bg-gradient-to-r from-primary-500 to-secondary-500 text-white rounded-xl shadow-soft"
+                className="sm:hidden p-2 bg-gradient-to-r from-primary-500 to-secondary-500 text-black rounded-xl shadow-soft"
               >
                 <ApperIcon name="Plus" className="w-5 h-5" />
               </motion.button>
