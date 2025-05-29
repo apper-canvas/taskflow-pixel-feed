@@ -41,6 +41,7 @@ export default {
           900: '#0f172a'
         }
       }
+
       fontFamily: {
         sans: ['Inter', 'ui-sans-serif', 'system-ui'],
         heading: ['Inter', 'ui-sans-serif', 'system-ui']
